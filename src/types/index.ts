@@ -19,6 +19,7 @@ export interface Guardian {
 }
 
 export type RiskLevel = 'low' | 'moderate' | 'elevated' | 'high';
+export type SafeWalkStatus = 'idle' | 'monitoring' | 'suspicious' | 'emergency';
 
 export interface RiskScore {
   score: number; // 0 - 100

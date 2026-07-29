@@ -8,7 +8,7 @@ import NearbySafePlaces from './NearbySafePlaces';
 import ProfileCard from './ProfileCard';
 import QuickActions from './QuickActions';
 import RecentAlerts from './RecentAlerts';
-import RiskCard from './RiskCard';
+import SafeWalkPanel from '../safewalk/SafeWalkPanel';
 import StatisticsCards from './StatisticsCards';
 import { fetchTimeline } from '../../services/safetyService';
 import VoiceIndicator from '../../components/emergency/VoiceIndicator';
@@ -49,7 +49,7 @@ export default function DashboardPage() {
         <div className="lg:col-span-2 flex flex-col gap-6">
           <LiveMap height="380px" />
           <div className="grid sm:grid-cols-2 gap-6">
-            <RiskCard />
+            <SafeWalkPanel />
             <QuickActions />
           </div>
           <IncidentTimeline events={timeline} title="Live timeline" compact />

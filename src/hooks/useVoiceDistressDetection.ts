@@ -20,7 +20,7 @@ export interface VoiceDistressState {
 
 /**
  * RMS amplitude (0–1) that must be exceeded for a volume spike to count.
- * 0.22 targets screams/shouts and ignores ambient speech, music, and car horns.
+ * 0.15 targets screams/shouts and ignores ambient speech, music, and car horns.
  * The Speech API is the primary signal; volume is a secondary "pure scream" heuristic.
  */
 const VOLUME_GATE_THRESHOLD = 0.15;

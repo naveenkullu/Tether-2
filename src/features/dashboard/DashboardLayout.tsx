@@ -8,6 +8,7 @@ const titleMap: Record<string, string> = {
   '/profile': 'Profile',
   '/guardians': 'Guardians',
   '/emergency': 'Emergency',
+  '/safe-places': 'Nearby Safe Places',
   '/history': 'History',
   '/settings': 'Settings',
 };

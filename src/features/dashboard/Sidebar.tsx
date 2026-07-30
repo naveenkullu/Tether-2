@@ -2,6 +2,7 @@ import { motion } from 'framer-motion';
 import {
   FiClock,
   FiGrid,
+  FiMapPin,
   FiSettings,
   FiShield,
   FiUser,
@@ -14,6 +15,7 @@ import TetherMark from '../../components/common/TetherMark';
 const navItems = [
   { to: '/dashboard', label: 'Dashboard', icon: FiGrid, end: true },
   { to: '/emergency', label: 'Emergency', icon: FiShield },
+  { to: '/safe-places', label: 'Safe Places', icon: FiMapPin },
   { to: '/guardians', label: 'Guardians', icon: FiUsers },
   { to: '/history', label: 'History', icon: FiClock },
   { to: '/profile', label: 'Profile', icon: FiUser },

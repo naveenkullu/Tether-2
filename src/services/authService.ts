@@ -27,15 +27,21 @@ interface BackendUser {
   email: string;
   name: string;
   picture?: string;
+  phone?: string;
+  bloodGroup?: string;
+  medicalNotes?: string;
 }
 
-function toFrontendUser(user: BackendUser): User {
+export function toFrontendUser(user: BackendUser): User {
   return {
     id: user._id,
     googleId: user.googleId,
     name: user.name,
     email: user.email,
     avatarUrl: user.picture,
+    phone: user.phone,
+    bloodGroup: user.bloodGroup,
+    medicalNotes: user.medicalNotes,
   };
 }
 
@@ -46,40 +52,23 @@ export const authService = {
    */
   async loginWithGoogle(credential: string): Promise<{ token: string; user: User }> {
     const claims = decodeGoogleCredential(credential);
-    let user: User;
-
-    try {
-      const { data } = await apiClient.post<{ user: BackendUser }>('/auth/google', {
-        googleId: claims.sub,
-        name: claims.name,
-        email: claims.email,
-        picture: claims.picture,
-      });
-      user = toFrontendUser(data.user);
-    } catch (err) {
-      console.warn('Backend sync failed, using local Google profile:', err);
-      user = {
-        id: `google_${claims.sub}`,
-        googleId: claims.sub,
-        name: claims.name,
-        email: claims.email,
-        avatarUrl: claims.picture,
-      };
-    }
+    const { data } = await apiClient.post<{ user: BackendUser }>('/auth/google', {
+      googleId: claims.sub,
+      name: claims.name,
+      email: claims.email,
+      picture: claims.picture,
+    });
+    const user = toFrontendUser(data.user);
 
     localStorage.setItem('tether_token', credential);
     return { token: credential, user };
   },
 
   async loginAsGuest(): Promise<{ token: string; user: User }> {
-    const guest: User = {
-      id: 'guest_000',
-      name: 'Guest User',
-      email: 'guest@tether.app',
-    };
-    const result = await mockDelay({ token: 'mock-guest-token', user: guest }, 500);
-    localStorage.setItem('tether_token', result.token);
-    return result;
+    const { data } = await apiClient.post<{ user: BackendUser }>('/auth/guest');
+    const token = `guest:${data.user._id}`;
+    localStorage.setItem('tether_token', token);
+    return { token, user: toFrontendUser(data.user) };
   },
 
   async logout(): Promise<void> {

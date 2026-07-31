@@ -2,6 +2,7 @@ import cors from 'cors';
 import express from 'express';
 import authRoutes from './routes/authRoutes.js';
 import monitoringRoutes from './routes/monitoringRoutes.js';
+import userRoutes from './routes/userRoutes.js';
 
 const app = express();
 
@@ -17,6 +18,7 @@ app.get('/health', (_req, res) => {
 
 app.use('/api', authRoutes);
 app.use('/api', monitoringRoutes);
+app.use('/api', userRoutes);
 
 app.use((req, res) => {
   res.status(404).json({ message: `Route not found: ${req.method} ${req.originalUrl}` });

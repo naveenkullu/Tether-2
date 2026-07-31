@@ -1,14 +1,27 @@
 import { FiClock, FiMapPin, FiShieldOff, FiUsers } from 'react-icons/fi';
 import Card from '../../components/common/Card';
+import { useGuardians } from '../../contexts/GuardianContext';
+import type { DashboardSummary } from '../../services/dashboardService';
 
-const stats = [
-  { icon: FiClock, label: 'Protected time this week', value: '11h 40m' },
-  { icon: FiMapPin, label: 'Trips tracked', value: '14' },
-  { icon: FiShieldOff, label: 'Alerts triggered', value: '0' },
-  { icon: FiUsers, label: 'Active guardians', value: '3' },
-];
+function formatProtectedTime(minutes = 0) {
+  const hours = Math.floor(minutes / 60);
+  const mins = minutes % 60;
+  return hours > 0 ? `${hours}h ${mins}m` : `${mins}m`;
+}
 
-export default function StatisticsCards() {
+interface StatisticsCardsProps {
+  summary?: DashboardSummary | null;
+}
+
+export default function StatisticsCards({ summary = null }: StatisticsCardsProps) {
+  const { guardians } = useGuardians();
+  const stats = [
+    { icon: FiClock, label: 'Protected time this week', value: formatProtectedTime(summary?.stats.protectedMinutes ?? 0) },
+    { icon: FiMapPin, label: 'Trips tracked', value: String(summary?.stats.tripsTracked ?? 0) },
+    { icon: FiShieldOff, label: 'Alerts triggered', value: String(summary?.stats.alertsTriggered ?? 0) },
+    { icon: FiUsers, label: 'Active guardians', value: String(summary?.stats.activeGuardians ?? guardians.length) },
+  ];
+
   return (
     <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
       {stats.map((stat) => (

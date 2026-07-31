@@ -32,6 +32,16 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     }
   }, [user]);
 
+  useEffect(() => {
+    if (!user) return;
+    profileService.get(user.id).then(setUser).catch(() => {
+      localStorage.removeItem(STORAGE_KEY);
+      localStorage.removeItem('tether_token');
+      setUser(null);
+    });
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
+
   const loginWithGoogle = async (credential: string) => {
     setIsLoading(true);
     try {

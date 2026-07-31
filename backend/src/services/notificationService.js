@@ -104,9 +104,9 @@ function normalizeGuardians(guardians = []) {
     if (String(guardian).match(/^[a-f\d]{24}$/i)) ids.push(String(guardian));
   }
 
-  // Always include primary alert email (warp639@gmail.com) so account owner receives notifications
-  const primaryEmail = process.env.PRIMARY_ALERT_EMAIL || 'warp639@gmail.com';
-  recipients.push({ name: 'Primary Guardian', email: primaryEmail });
+  if (process.env.PRIMARY_ALERT_EMAIL) {
+    recipients.push({ name: 'Primary Guardian', email: process.env.PRIMARY_ALERT_EMAIL });
+  }
 
   const seen = new Set();
   const uniqueRecipients = recipients.filter((recipient) => {

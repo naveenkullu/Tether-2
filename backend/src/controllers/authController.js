@@ -17,6 +17,9 @@ function serializeUser(user) {
     email: user.email,
     name: user.name,
     picture: user.picture,
+    phone: user.phone,
+    bloodGroup: user.bloodGroup,
+    medicalNotes: user.medicalNotes,
     createdAt: user.createdAt,
     updatedAt: user.updatedAt,
   };
@@ -40,4 +43,15 @@ export async function syncGoogleUserHandler(req, res) {
   );
 
   res.status(200).json({ user: serializeUser(user) });
+}
+
+export async function createGuestUserHandler(_req, res) {
+  const guestId = `guest_${Date.now()}_${Math.random().toString(36).slice(2, 8)}`;
+  const user = await User.create({
+    googleId: guestId,
+    email: `${guestId}@tether.app`,
+    name: 'Guest User',
+  });
+
+  res.status(201).json({ user: serializeUser(user) });
 }

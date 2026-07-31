@@ -27,6 +27,18 @@ const userSchema = new Schema(
       type: String,
       trim: true,
     },
+    phone: {
+      type: String,
+      trim: true,
+    },
+    bloodGroup: {
+      type: String,
+      trim: true,
+    },
+    medicalNotes: {
+      type: String,
+      trim: true,
+    },
   },
   { timestamps: true },
 );

@@ -10,15 +10,18 @@ import QuickActions from './QuickActions';
 import RecentAlerts from './RecentAlerts';
 import SafeWalkPanel from '../safewalk/SafeWalkPanel';
 import StatisticsCards from './StatisticsCards';
-import { fetchTimeline } from '../../services/safetyService';
 import VoiceIndicator from '../../components/emergency/VoiceIndicator';
 import { useLiveLocation } from '../../hooks/useLiveLocation';
 import { useVoiceDistressDetection } from '../../hooks/useVoiceDistressDetection';
+import { useAuth } from '../../contexts/AuthContext';
+import { fetchDashboardSummary, type DashboardSummary } from '../../services/dashboardService';
 import type { TimelineEvent } from '../../types';
 
 export default function DashboardPage() {
   const [timeline, setTimeline] = useState<TimelineEvent[]>([]);
+  const [summary, setSummary] = useState<DashboardSummary | null>(null);
   const navigate = useNavigate();
+  const { user } = useAuth();
   const liveLocation = useLiveLocation();
 
   // When distress is detected from dashboard, navigate to emergency page
@@ -30,12 +33,19 @@ export default function DashboardPage() {
     useVoiceDistressDetection(onDistress, true);
 
   useEffect(() => {
-    fetchTimeline().then(setTimeline);
-  }, []);
+    if (!user) return;
+    fetchDashboardSummary(user.id).then((data) => {
+      setSummary(data);
+      setTimeline(data.timeline);
+    }).catch(() => {
+      setSummary(null);
+      setTimeline([]);
+    });
+  }, [user]);
 
   return (
     <div className="flex flex-col gap-6 pb-10">
-      <StatisticsCards />
+      <StatisticsCards summary={summary} />
 
       {/* Compact voice monitoring strip */}
       <div className="-mt-2">
@@ -61,7 +71,7 @@ export default function DashboardPage() {
           <ProfileCard />
           <GuardianList />
           <AIInsights />
-          <RecentAlerts />
+          <RecentAlerts alerts={summary?.recentAlerts ?? []} />
           <NearbySafePlaces origin={liveLocation.coords} />
         </div>
       </div>

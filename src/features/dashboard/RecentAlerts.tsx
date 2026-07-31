@@ -1,11 +1,21 @@
 import { FiCheckCircle, FiClock } from 'react-icons/fi';
 import Card from '../../components/common/Card';
 
-const recent = [
-  { id: 1, title: 'No alerts in the last 7 days', description: 'Your routes have stayed within familiar patterns.', resolved: true },
+interface RecentAlertsProps {
+  alerts?: {
+    id: string;
+    title: string;
+    description: string;
+    resolved: boolean;
+  }[];
+}
+
+const emptyRecent = [
+  { id: 'empty', title: 'No alerts yet', description: 'Your alert history will appear here once Tether records activity.', resolved: true },
 ];
 
-export default function RecentAlerts() {
+export default function RecentAlerts({ alerts = [] }: RecentAlertsProps) {
+  const recent = alerts.length > 0 ? alerts : emptyRecent;
   return (
     <Card>
       <div className="flex items-center gap-2 text-sky-300/80 text-xs uppercase tracking-wide mb-4">

@@ -14,6 +14,7 @@ import GuardiansPage from './features/guardians/GuardiansPage';
 import HistoryPage from './features/history/HistoryPage';
 import LandingPage from './features/landing/LandingPage';
 import ProfilePage from './features/profile/ProfilePage';
+import SafePlacesPage from './features/safePlaces/SafePlacesPage';
 import SettingsPage from './features/settings/SettingsPage';
 import LoadingScreen from './features/shared/LoadingScreen';
 import NotFoundPage from './features/shared/NotFoundPage';
@@ -42,6 +43,7 @@ function AppShell() {
               <Route path="/profile" element={<ProfilePage />} />
               <Route path="/guardians" element={<GuardiansPage />} />
               <Route path="/emergency" element={<EmergencyPage />} />
+              <Route path="/safe-places" element={<SafePlacesPage />} />
               <Route path="/history" element={<HistoryPage />} />
               <Route path="/settings" element={<SettingsPage />} />
             </Route>

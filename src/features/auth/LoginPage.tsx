@@ -28,9 +28,7 @@ export default function LoginPage() {
           email: string;
           picture?: string;
         };
-        // Encode the profile as a base64 string and pass it through authService,
-        // which decodes it and builds a User. When a real backend exists, this
-        // We encode the profile as a base64 JSON payload and pass it through.
+        // Encode the Google profile so authService can sync the authenticated user to MongoDB.
         const base64Payload = btoa(unescape(encodeURIComponent(JSON.stringify(profile))));
         const fakeCredential = `dummy.${base64Payload}.dummy`;
         await loginWithGoogle(fakeCredential);

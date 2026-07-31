@@ -5,7 +5,7 @@ import { FiCrosshair, FiRefreshCw } from 'react-icons/fi';
 import { MapContainer, Marker, Popup, TileLayer, useMap } from 'react-leaflet';
 import Button from '../../components/common/Button';
 import Loader from '../../components/common/Loader';
-import { useLiveLocation } from '../../hooks/useLiveLocation';
+import { useLiveLocation, type UseLiveLocationResult } from '../../hooks/useLiveLocation';
 import type { Coordinates } from '../../types';
 import { formatCoord } from '../../utils/format';
 
@@ -60,10 +60,12 @@ interface LiveMapProps {
   /** Optional externally-supplied point (e.g. a future backend emergency location) to render alongside the user. */
   externalPoint?: { coords: Coordinates; label: string } | null;
   height?: string;
+  liveLocation?: UseLiveLocationResult;
 }
 
-export default function LiveMap({ externalPoint = null, height = '420px' }: LiveMapProps) {
-  const { coords, status, lastUpdated, error, refresh } = useLiveLocation();
+export default function LiveMap({ externalPoint = null, height = '420px', liveLocation }: LiveMapProps) {
+  const ownLiveLocation = useLiveLocation(!liveLocation);
+  const { coords, status, lastUpdated, error, refresh } = liveLocation ?? ownLiveLocation;
   const mapRef = useRef<L.Map | null>(null);
 
   useEffect(() => {

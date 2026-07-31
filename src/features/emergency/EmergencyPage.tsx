@@ -6,6 +6,8 @@ import Button from '../../components/common/Button';
 import Card from '../../components/common/Card';
 import Modal from '../../components/common/Modal';
 import VoiceIndicator from '../../components/emergency/VoiceIndicator';
+import { useAuth } from '../../contexts/AuthContext';
+import { useGuardians } from '../../contexts/GuardianContext';
 import { useVoiceDistressDetection } from '../../hooks/useVoiceDistressDetection';
 import { triggerEmergencyAlert } from '../../services/safetyService';
 import type { AlertRecord, Coordinates } from '../../types';
@@ -23,6 +25,8 @@ function fakeCoordinates(): Coordinates {
 }
 
 export default function EmergencyPage() {
+  const { user } = useAuth();
+  const { guardians } = useGuardians();
   const [phase, setPhase] = useState<Phase>('idle');
   const [alert, setAlert] = useState<AlertRecord | null>(null);
   const [successOpen, setSuccessOpen] = useState(false);
@@ -33,12 +37,12 @@ export default function EmergencyPage() {
     setPhase('arming');
     await new Promise((r) => setTimeout(r, 900));
     setPhase('sending');
-    const location = fakeCoordinates();
-    const record = await triggerEmergencyAlert(location);
+    const loc = fakeCoordinates();
+    const record = await triggerEmergencyAlert(loc, guardians, user);
     setAlert(record);
     setPhase('sent');
     setSuccessOpen(true);
-  }, [phase]);
+  }, [phase, guardians, user]);
 
   const { status: voiceStatus, error: voiceError, startListening, stopListening } =
     useVoiceDistressDetection(handleTrigger, true);

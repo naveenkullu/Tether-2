@@ -12,12 +12,14 @@ import SafeWalkPanel from '../safewalk/SafeWalkPanel';
 import StatisticsCards from './StatisticsCards';
 import { fetchTimeline } from '../../services/safetyService';
 import VoiceIndicator from '../../components/emergency/VoiceIndicator';
+import { useLiveLocation } from '../../hooks/useLiveLocation';
 import { useVoiceDistressDetection } from '../../hooks/useVoiceDistressDetection';
 import type { TimelineEvent } from '../../types';
 
 export default function DashboardPage() {
   const [timeline, setTimeline] = useState<TimelineEvent[]>([]);
   const navigate = useNavigate();
+  const liveLocation = useLiveLocation();
 
   // When distress is detected from dashboard, navigate to emergency page
   const onDistress = useCallback(() => {
@@ -47,9 +49,9 @@ export default function DashboardPage() {
 
       <div className="grid lg:grid-cols-3 gap-6">
         <div className="lg:col-span-2 flex flex-col gap-6">
-          <LiveMap height="380px" />
+          <LiveMap height="380px" liveLocation={liveLocation} />
           <div className="grid sm:grid-cols-2 gap-6">
-            <SafeWalkPanel />
+            <SafeWalkPanel liveLocation={liveLocation.coords} />
             <QuickActions />
           </div>
           <IncidentTimeline events={timeline} title="Live timeline" compact />
@@ -60,7 +62,7 @@ export default function DashboardPage() {
           <GuardianList />
           <AIInsights />
           <RecentAlerts />
-          <NearbySafePlaces />
+          <NearbySafePlaces origin={liveLocation.coords} />
         </div>
       </div>
     </div>

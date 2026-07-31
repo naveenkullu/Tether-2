@@ -3,7 +3,7 @@ import type { Coordinates } from '../types';
 
 export type LocationStatus = 'idle' | 'requesting' | 'granted' | 'denied' | 'unavailable';
 
-interface UseLiveLocationResult {
+export interface UseLiveLocationResult {
   coords: Coordinates | null;
   status: LocationStatus;
   lastUpdated: Date | null;
@@ -17,7 +17,7 @@ interface UseLiveLocationResult {
  * if permission is denied or the API is unavailable — the LiveMap component
  * decides what to render for each status.
  */
-export function useLiveLocation(): UseLiveLocationResult {
+export function useLiveLocation(enabled = true): UseLiveLocationResult {
   const [coords, setCoords] = useState<Coordinates | null>(null);
   const [status, setStatus] = useState<LocationStatus>('idle');
   const [lastUpdated, setLastUpdated] = useState<Date | null>(null);
@@ -64,6 +64,7 @@ export function useLiveLocation(): UseLiveLocationResult {
   }, [handleSuccess, handleError]);
 
   useEffect(() => {
+    if (!enabled) return undefined;
     startWatching();
     return () => {
       if (watchId.current !== null) {
@@ -71,7 +72,7 @@ export function useLiveLocation(): UseLiveLocationResult {
       }
     };
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, []);
+  }, [enabled]);
 
   const refresh = useCallback(() => startWatching(), [startWatching]);
 

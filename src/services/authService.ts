@@ -1,4 +1,4 @@
-import { mockDelay } from './apiClient';
+import { apiClient, mockDelay } from './apiClient';
 import type { User } from '../types';
 
 /**
@@ -21,30 +21,52 @@ function decodeGoogleCredential(credential: string): {
   return JSON.parse(json) as { sub: string; name: string; email: string; picture?: string };
 }
 
-/**
- * BACKEND CONTRACT (future):
- *   POST /login   { credential } -> { token: string, user: User }
- *   POST /logout  -> 204
- *
- * To switch to a real backend, replace the body of loginWithGoogle() with:
- *   const { data } = await apiClient.post<{ token: string; user: User }>('/login', { credential });
- *   localStorage.setItem('tether_token', data.token);
- *   return data;
- */
+interface BackendUser {
+  _id: string;
+  googleId: string;
+  email: string;
+  name: string;
+  picture?: string;
+}
+
+function toFrontendUser(user: BackendUser): User {
+  return {
+    id: user._id,
+    googleId: user.googleId,
+    name: user.name,
+    email: user.email,
+    avatarUrl: user.picture,
+  };
+}
+
 export const authService = {
   /**
    * Accepts the real Google ID-token credential from @react-oauth/google,
-   * decodes it client-side, and builds a User from the Google claims.
-   * The credential itself is stored as the session token until a real backend exists.
+   * decodes it client-side, then syncs the already-authenticated user to MongoDB.
    */
   async loginWithGoogle(credential: string): Promise<{ token: string; user: User }> {
     const claims = decodeGoogleCredential(credential);
-    const user: User = {
-      id: claims.sub,               // Google's stable unique user ID
-      name: claims.name,
-      email: claims.email,
-      avatarUrl: claims.picture,    // Google profile photo URL
-    };
+    let user: User;
+
+    try {
+      const { data } = await apiClient.post<{ user: BackendUser }>('/auth/google', {
+        googleId: claims.sub,
+        name: claims.name,
+        email: claims.email,
+        picture: claims.picture,
+      });
+      user = toFrontendUser(data.user);
+    } catch (err) {
+      console.warn('Backend sync failed, using local Google profile:', err);
+      user = {
+        id: `google_${claims.sub}`,
+        googleId: claims.sub,
+        name: claims.name,
+        email: claims.email,
+        avatarUrl: claims.picture,
+      };
+    }
+
     localStorage.setItem('tether_token', credential);
     return { token: credential, user };
   },

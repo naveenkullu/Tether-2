@@ -1,9 +1,14 @@
 import { FiShield, FiStopCircle, FiCheckCircle, FiCompass, FiVolume2, FiRadio } from 'react-icons/fi';
 import Card from '../../components/common/Card';
 import { useSmartSafeWalk } from '../../hooks/useSmartSafeWalk';
+import type { Coordinates } from '../../types';
 
-export default function SafeWalkPanel() {
-  const { status, riskScore, startWalk, stopWalk, confirmSafe } = useSmartSafeWalk();
+interface SafeWalkPanelProps {
+  liveLocation?: Coordinates | null;
+}
+
+export default function SafeWalkPanel({ liveLocation = null }: SafeWalkPanelProps) {
+  const { status, riskScore, startWalk, stopWalk, confirmSafe } = useSmartSafeWalk(liveLocation);
   const isActive = status !== 'idle';
 
   const displayScore = riskScore?.score ?? (isActive ? 12 : 10);

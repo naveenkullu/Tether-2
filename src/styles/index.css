@@ -69,16 +69,17 @@
 
 @layer utilities {
   .glass {
-    background: color-mix(in srgb, var(--color-dusk-800) 55%, transparent);
-    backdrop-filter: blur(20px) saturate(140%);
-    -webkit-backdrop-filter: blur(20px) saturate(140%);
-    border: 1px solid color-mix(in srgb, var(--color-sky-300) 14%, transparent);
+    background: color-mix(in srgb, var(--color-dusk-900) 78%, transparent);
+    backdrop-filter: blur(24px) saturate(160%);
+    -webkit-backdrop-filter: blur(24px) saturate(160%);
+    border: 1px solid color-mix(in srgb, var(--color-sky-200) 18%, transparent);
+    box-shadow: 0 8px 32px 0 rgba(10, 20, 29, 0.35);
   }
   .glass-light {
-    background: color-mix(in srgb, white 8%, transparent);
-    backdrop-filter: blur(16px) saturate(140%);
-    -webkit-backdrop-filter: blur(16px) saturate(140%);
-    border: 1px solid color-mix(in srgb, white 12%, transparent);
+    background: color-mix(in srgb, var(--color-dusk-800) 70%, transparent);
+    backdrop-filter: blur(20px) saturate(150%);
+    -webkit-backdrop-filter: blur(20px) saturate(150%);
+    border: 1px solid color-mix(in srgb, var(--color-sky-300) 22%, transparent);
   }
   .text-gradient-sky {
     background: linear-gradient(120deg, var(--color-sky-100), var(--color-teal-400) 55%, var(--color-sky-300));

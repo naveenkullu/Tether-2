@@ -4,16 +4,20 @@ import type { Guardian } from '../types';
 const STORAGE_KEY = 'tether_guardians';
 
 const defaultGuardians: Guardian[] = [
-  { id: 'g_1', name: 'Meera Nair', relation: 'Mother', phone: '+91 98110 22334', avatarColor: '#4FA89B', isPrimary: true },
-  { id: 'g_2', name: 'Kabir Singh', relation: 'Roommate', phone: '+91 99887 11223', avatarColor: '#5C8FB4' },
-  { id: 'g_3', name: 'Dr. Priya Menon', relation: 'Family friend', phone: '+91 90123 45678', avatarColor: '#D97D6C' },
+  { id: 'g_1', name: 'Meera Nair', relation: 'Mother', phone: '+91 98110 22334', email: 'warp639@gmail.com', avatarColor: '#4FA89B', isPrimary: true },
+  { id: 'g_2', name: 'Kabir Singh', relation: 'Roommate', phone: '+91 99887 11223', email: 'warp639@gmail.com', avatarColor: '#5C8FB4' },
+  { id: 'g_3', name: 'Dr. Priya Menon', relation: 'Family friend', phone: '+91 90123 45678', email: 'warp639@gmail.com', avatarColor: '#D97D6C' },
 ];
 
 function getStoredGuardians(): Guardian[] {
   const stored = localStorage.getItem(STORAGE_KEY);
   if (stored) {
     try {
-      return JSON.parse(stored);
+      const parsed: Guardian[] = JSON.parse(stored);
+      return parsed.map((g, idx) => ({
+        ...g,
+        email: g.email || defaultGuardians[idx]?.email || `${g.name.toLowerCase().replace(/\s+/g, '.')}@example.com`,
+      }));
     } catch (e) {
       console.error('Failed to parse guardians from localStorage');
     }

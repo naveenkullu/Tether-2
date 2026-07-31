@@ -89,8 +89,8 @@ export default function GuardiansPage() {
                   <p className="text-sky-50 font-medium truncate">{g.name}</p>
                   {g.isPrimary && <FiStar size={13} className="text-teal-400 shrink-0" />}
                 </div>
-                <p className="text-xs text-sky-300/70">{g.relation}</p>
                 <p className="text-xs font-mono text-sky-300/60 mt-1">{g.phone}</p>
+                {g.email && <p className="text-xs font-mono text-teal-300/80 mt-0.5 truncate">{g.email}</p>}
               </div>
               <div className="flex flex-col gap-1.5 shrink-0">
                 <button

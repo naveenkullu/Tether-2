@@ -2,7 +2,7 @@ import { useEffect, useState } from 'react';
 import { FiHome, FiPlusCircle, FiShoppingBag, FiUserCheck } from 'react-icons/fi';
 import Card from '../../components/common/Card';
 import { fetchSafePlaces } from '../../services/safetyService';
-import type { SafePlace } from '../../types';
+import type { Coordinates, SafePlace } from '../../types';
 
 const typeIcon: Record<SafePlace['type'], typeof FiHome> = {
   police: FiHome,
@@ -11,12 +11,16 @@ const typeIcon: Record<SafePlace['type'], typeof FiHome> = {
   friend: FiUserCheck,
 };
 
-export default function NearbySafePlaces() {
+interface NearbySafePlacesProps {
+  origin?: Coordinates | null;
+}
+
+export default function NearbySafePlaces({ origin = null }: NearbySafePlacesProps) {
   const [places, setPlaces] = useState<SafePlace[]>([]);
 
   useEffect(() => {
-    fetchSafePlaces().then(setPlaces);
-  }, []);
+    fetchSafePlaces(origin ?? undefined).then(setPlaces);
+  }, [origin]);
 
   return (
     <Card>

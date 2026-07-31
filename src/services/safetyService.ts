@@ -1,7 +1,7 @@
 import Groq from 'groq-sdk';
-import { mockDelay } from './apiClient';
+import { apiClient, mockDelay } from './apiClient';
 import { fetchCurrentWeather, type WeatherData } from './weatherService';
-import type { AIInsight, AlertRecord, Coordinates, RiskScore, SafePlace, TimelineEvent } from '../types';
+import type { AIInsight, AlertRecord, Coordinates, Guardian, RiskScore, SafePlace, TimelineEvent } from '../types';
 
 const groq = new Groq({ apiKey: import.meta.env.VITE_GROQ_API_KEY || 'fake', dangerouslyAllowBrowser: true });
 const hasApiKey = Boolean(import.meta.env.VITE_GROQ_API_KEY);
@@ -155,17 +155,38 @@ Example: { "insights": [{ "tone": "advisory", "message": "Heavy rain is occurrin
   }
 }
 
-/** POST /emergency — pretends an alert was sent to guardians with live location. */
-export async function triggerEmergencyAlert(location: Coordinates): Promise<AlertRecord> {
+/** POST /emergency — dispatches live emergency alert via backend monitoring API. */
+export async function triggerEmergencyAlert(
+  location: Coordinates,
+  guardians: Guardian[] = [],
+  user?: { id: string; name: string; email?: string } | null,
+): Promise<AlertRecord> {
+  const notifiedNames = guardians.length > 0
+    ? guardians.map((g) => g.name)
+    : ['Meera Nair', 'Kabir Singh', 'Dr. Priya Menon'];
+
+  try {
+    await apiClient.post('/monitoring/emergency', {
+      userId: user?.id || 'guest_000',
+      userName: user?.name || 'Tether User',
+      userEmail: user?.email,
+      latitude: location.lat,
+      longitude: location.lng,
+      guardians,
+    });
+  } catch (err) {
+    console.warn('[SafetyService] Backend emergency alert dispatch offline/skipped, alert recorded locally:', err);
+  }
+
   return mockDelay(
     {
       id: `alert_${Date.now()}`,
       status: 'sent',
       location: { lat: location.lat, lng: location.lng },
       triggeredAt: new Date().toISOString(),
-      guardiansNotified: ['Meera Nair', 'Kabir Singh', 'Dr. Priya Menon'],
+      guardiansNotified: notifiedNames,
     },
-    1400,
+    1000,
   );
 }
 

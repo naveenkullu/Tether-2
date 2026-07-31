@@ -1,5 +1,9 @@
 import { useState, useEffect, useRef, useCallback } from 'react';
-import { triggerEmergencyAlert, fetchRiskScore, type RiskContext } from '../services/safetyService';
+import { useAuth } from '../contexts/AuthContext';
+import { useGuardians } from '../contexts/GuardianContext';
+import { triggerEmergencyAlert, fetchRiskScore, fetchSafePlaces, type RiskContext } from '../services/safetyService';
+import { monitoringService } from '../services/monitoringService';
+import { fetchCurrentWeather } from '../services/weatherService';
 import type { RiskScore, Coordinates, SafeWalkStatus } from '../types';
 
 const DISTRESS_KEYWORDS = ['help', 'bachao', 'stop', 'no', 'emergency'];
@@ -7,6 +11,19 @@ const AUDIO_SPIKE_THRESHOLD = 0.15;   // RMS 0–1 scale: 0.15 ≈ sustained lou
 const IMPACT_THRESHOLD = 25;          // m/s² (gravity alone ≈ 9.8; sharp impact > 25)
 const ANOMALY_WINDOW_MS = 5000;       // Two anomalies within 5 s → suspicious
 const ESCALATION_TIMEOUT_MS = 10000; // 10 s in suspicious without reset → emergency
+const MONITORING_UPDATE_MS = 30000;
+const DEFAULT_LOCATION = { lat: 28.6139, lng: 77.2090 };
+
+function isValidLocation(location: Coordinates | null | undefined): location is Coordinates {
+  return Number.isFinite(location?.lat) && Number.isFinite(location?.lng);
+}
+
+function toAlertRiskLevel(score: number): 'Low' | 'Medium' | 'High' | 'Critical' {
+  if (score >= 80) return 'Critical';
+  if (score >= 60) return 'High';
+  if (score >= 35) return 'Medium';
+  return 'Low';
+}
 
 /** All persistent sensor resources held in a single bag for atomic cleanup */
 interface SensorResources {
@@ -74,7 +91,9 @@ function releaseSensorResources(res: SensorResources) {
   }
 }
 
-export function useSmartSafeWalk() {
+export function useSmartSafeWalk(liveLocation: Coordinates | null = null) {
+  const { user } = useAuth();
+  const { guardians } = useGuardians();
   const [status, setStatus] = useState<SafeWalkStatus>('idle');
   const [riskScore, setRiskScore] = useState<RiskScore | null>(null);
 
@@ -88,6 +107,7 @@ export function useSmartSafeWalk() {
   const anomalyTimestamps = useRef<number[]>([]);
   const escalationTimer = useRef<number | null>(null);
   const riskInterval = useRef<number | null>(null);
+  const monitoringSessionId = useRef<string | null>(null);
   const sensors = useRef<SensorResources>(makeSensorResources());
 
   // Keep statusRef in sync with state
@@ -96,17 +116,82 @@ export function useSmartSafeWalk() {
     setStatus(s);
   }, []);
 
+  const readBatteryLevel = useCallback(async () => {
+    const nav = navigator as Navigator & { getBattery?: () => Promise<{ level?: number }> };
+    if (!nav.getBattery) return undefined;
+    const battery = await nav.getBattery();
+    return typeof battery.level === 'number' ? Math.round(battery.level * 100) : undefined;
+  }, []);
+
+  useEffect(() => {
+    if (isValidLocation(liveLocation)) {
+      locationRef.current = liveLocation;
+      lastGeoUpdate.current = Date.now();
+    }
+  }, [liveLocation]);
+
+  const collectSnapshotData = useCallback(async () => {
+    const location = isValidLocation(liveLocation)
+      ? liveLocation
+      : isValidLocation(locationRef.current)
+        ? locationRef.current
+        : DEFAULT_LOCATION;
+    const weather = await fetchCurrentWeather(location.lat, location.lng);
+    const safePlaces = await fetchSafePlaces(location);
+    const ctx: RiskContext = {
+      location,
+      currentSpeed: speedRef.current,
+      recentStops: stopsRef.current,
+      isOnUsualRoute: true,
+      weather,
+    };
+    const score = await fetchRiskScore(ctx);
+
+    return {
+      location,
+      weather,
+      safePlaces,
+      score,
+      batteryLevel: await readBatteryLevel(),
+      nearbyPoliceStations: safePlaces.filter((place) => place.type === 'police'),
+      nearbyHospitals: safePlaces.filter((place) => place.type === 'hospital'),
+    };
+  }, [liveLocation, readBatteryLevel]);
+
+  const sendMonitoringSnapshot = useCallback(async (isSos = false) => {
+    if (!user || !monitoringSessionId.current) return;
+
+    const snapshot = await collectSnapshotData();
+    setRiskScore(snapshot.score);
+
+    await monitoringService.update({
+      userId: user.id,
+      sessionId: monitoringSessionId.current,
+      location: snapshot.location,
+      riskScore: snapshot.score,
+      weather: snapshot.weather,
+      safePlaces: snapshot.safePlaces,
+      guardians,
+      walkingSpeedKmph: speedRef.current,
+      stoppedUnexpectedly: stopsRef.current > 0,
+      longInactivity: Date.now() - lastGeoUpdate.current > MONITORING_UPDATE_MS * 2,
+      isSos,
+      batteryLevel: snapshot.batteryLevel,
+    });
+  }, [collectSnapshotData, guardians, user]);
+
   /** ---------- Escalation Engine ---------- */
   const escalateToEmergency = useCallback(async () => {
     if (statusRef.current === 'emergency') return;
     updateStatus('emergency');
-    const loc = locationRef.current ?? { lat: 28.6139, lng: 77.2090 };
+    const loc = locationRef.current ?? DEFAULT_LOCATION;
     try {
       await triggerEmergencyAlert(loc);
+      await sendMonitoringSnapshot(true);
     } catch (err) {
       console.error('[SafeWalk] Emergency alert failed:', err);
     }
-  }, [updateStatus]);
+  }, [sendMonitoringSnapshot, updateStatus]);
 
   const recordAnomaly = useCallback((source: string) => {
     if (statusRef.current === 'emergency') return;
@@ -253,25 +338,46 @@ export function useSmartSafeWalk() {
     updateStatus('monitoring');
     await startSensors();
 
-    // Start risk scoring — delay 5 s to avoid rate-limiting on button press
+    const snapshot = await collectSnapshotData();
+    setRiskScore(snapshot.score);
+
+    const userId = user?.id || 'guest_000';
+    try {
+      const session = await monitoringService.start(userId, snapshot.location, {
+        currentSafeScore: snapshot.score.score,
+        currentRiskLevel: toAlertRiskLevel(snapshot.score.score),
+        weather: snapshot.weather,
+        nearbySafePlaces: snapshot.safePlaces,
+        nearbyPoliceStations: snapshot.nearbyPoliceStations,
+        nearbyHospitals: snapshot.nearbyHospitals,
+        aiInsight: {
+          message: snapshot.score.factors[0] ?? 'Safe Walk monitoring active.',
+          tone: 'advisory',
+          createdAt: new Date().toISOString(),
+        },
+        batteryLevel: snapshot.batteryLevel,
+        walkingSpeedKmph: speedRef.current,
+        dayNight: snapshot.weather.isDay ? 'day' : 'night',
+        timestamp: new Date().toISOString(),
+        guardians,
+      });
+      monitoringSessionId.current = session._id;
+    } catch (err) {
+      console.warn('[SafeWalk] Backend monitoring session failed to start:', err);
+    }
+
+    // Start risk scoring and backend snapshots.
     riskInterval.current = window.setInterval(async () => {
       if (statusRef.current === 'idle') return;
       try {
-        const ctx: RiskContext = {
-          location: locationRef.current ?? undefined,
-          currentSpeed: speedRef.current,
-          recentStops: stopsRef.current,
-          isOnUsualRoute: true,
-        };
-        const score = await fetchRiskScore(ctx);
-        setRiskScore(score);
+        await sendMonitoringSnapshot();
       } catch (_) {
         // Silently ignore API errors during walk (rate limits etc.)
       }
-    }, 35000); // 35 s between calls to stay well within free tier limits
-  }, [startSensors, updateStatus]);
+    }, MONITORING_UPDATE_MS);
+  }, [collectSnapshotData, guardians, sendMonitoringSnapshot, startSensors, updateStatus, user]);
 
-  const stopWalk = useCallback(() => {
+  const stopWalk = useCallback(async () => {
     if (escalationTimer.current) {
       clearTimeout(escalationTimer.current);
       escalationTimer.current = null;
@@ -283,9 +389,17 @@ export function useSmartSafeWalk() {
     releaseSensorResources(sensors.current);
     sensors.current = makeSensorResources(); // fresh bag for next walk
     anomalyTimestamps.current = [];
+    if (monitoringSessionId.current) {
+      try {
+        await monitoringService.stop(user?.id || 'guest_000', monitoringSessionId.current, locationRef.current ?? undefined, guardians);
+      } catch (err) {
+        console.warn('[SafeWalk] Backend monitoring session failed to stop:', err);
+      }
+    }
+    monitoringSessionId.current = null;
     updateStatus('idle');
     setRiskScore(null);
-  }, [updateStatus]);
+  }, [guardians, updateStatus, user]);
 
   const confirmSafe = useCallback(() => {
     // User manually confirms they are safe — cancel escalation

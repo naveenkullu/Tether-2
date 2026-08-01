@@ -23,25 +23,25 @@ export default function Footer() {
         <div className="lg:col-span-2">
           <div className="flex items-center gap-2.5">
             <TetherMark size={30} animated={false} />
-            <span className="font-display text-lg text-sky-50">Tether</span>
+            <span className="font-display text-lg text-black">Tether</span>
           </div>
-          <p className="mt-4 text-sm text-sky-300/70 max-w-xs leading-relaxed">
+          <p className="mt-4 text-sm text-black/80 max-w-xs leading-relaxed">
             Predict. Protect. Preserve. A quieter kind of safety, built for the moments that matter.
           </p>
-          <div className="mt-5 flex items-center gap-3 text-sky-300/70">
-            <a href="#" aria-label="Twitter" className="hover:text-sky-50 transition-colors"><FiTwitter size={16} /></a>
-            <a href="#" aria-label="GitHub" className="hover:text-sky-50 transition-colors"><FiGithub size={16} /></a>
-            <a href="#" aria-label="LinkedIn" className="hover:text-sky-50 transition-colors"><FiLinkedin size={16} /></a>
+          <div className="mt-5 flex items-center gap-3 text-black/80">
+            <a href="#" aria-label="Twitter" className="hover:text-black transition-colors"><FiTwitter size={16} /></a>
+            <a href="#" aria-label="GitHub" className="hover:text-black transition-colors"><FiGithub size={16} /></a>
+            <a href="#" aria-label="LinkedIn" className="hover:text-black transition-colors"><FiLinkedin size={16} /></a>
           </div>
         </div>
 
         {columns.map((col) => (
           <div key={col.title}>
-            <p className="text-xs uppercase tracking-[0.15em] text-sky-400/70 mb-4">{col.title}</p>
+            <p className="text-xs uppercase tracking-[0.15em] text-black/80 mb-4">{col.title}</p>
             <ul className="flex flex-col gap-2.5">
               {col.links.map((link) => (
                 <li key={link}>
-                  <a href="#" className="text-sm text-sky-300/80 hover:text-sky-50 transition-colors">{link}</a>
+                  <a href="#" className="text-sm text-black/80 hover:text-black transition-colors">{link}</a>
                 </li>
               ))}
             </ul>
@@ -49,11 +49,11 @@ export default function Footer() {
         ))}
       </div>
 
-      <div className="max-w-6xl mx-auto mt-14 pt-6 border-t border-white/[0.06] flex flex-col sm:flex-row justify-between gap-3 text-xs text-sky-400/60">
+      <div className="max-w-6xl mx-auto mt-14 pt-6 border-t border-white/[0.06] flex flex-col sm:flex-row justify-between gap-3 text-xs text-black/80">
         <span>© {new Date().getFullYear()} Tether Technologies. Built for Team TuffCoders.</span>
         <div className="flex gap-5">
-          <a href="#" className="hover:text-sky-200">Privacy</a>
-          <a href="#" className="hover:text-sky-200">Terms</a>
+          <a href="#" className="hover:text-black">Privacy</a>
+          <a href="#" className="hover:text-black">Terms</a>
         </div>
       </div>
     </footer>

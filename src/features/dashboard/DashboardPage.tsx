@@ -4,7 +4,6 @@ import LiveMap from '../map/LiveMap';
 import AIInsights from './AIInsights';
 import GuardianList from './GuardianList';
 import IncidentTimeline from './IncidentTimeline';
-import NearbySafePlaces from './NearbySafePlaces';
 import ProfileCard from './ProfileCard';
 import QuickActions from './QuickActions';
 import RecentAlerts from './RecentAlerts';
@@ -72,7 +71,7 @@ export default function DashboardPage() {
           <GuardianList />
           <AIInsights />
           <RecentAlerts alerts={summary?.recentAlerts ?? []} />
-          <NearbySafePlaces origin={liveLocation.coords} />
+          
         </div>
       </div>
     </div>
